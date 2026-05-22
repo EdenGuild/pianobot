@@ -377,14 +377,6 @@ async def _reconcile_guild_raids(
                 inferred.append((uuid, username, member_server.get(uuid)))
                 remaining -= 1
 
-        if remaining > 0:
-            log.warning(
-                "Guild raid hidden slots unmatched (guild=%s): %s/%s unresolved.",
-                guild.name,
-                remaining,
-                hidden_slots,
-            )
-
     for uuid, username, raid_name in visible:
         await _insert_one_raid(
             pool, guild.uuid, uuid, username, raid_name, raid_ids, result
@@ -425,38 +417,36 @@ async def _reconcile_guild_raids(
             if target_server:
                 if server == target_server:
                     log.debug(
-                        "Inferred %s to %s (server match: %s) [guild=%s]",
+                        "Guild %s: Inferred %s to %s (server match: %s)",
+                        guild.name,
                         username,
                         raid_name,
                         server,
-                        guild.name,
                     )
                 else:
                     log.debug(
-                        "Inferred %s to %s (server mismatch: player=%s bucket=%s)"
+                        "Guild %s: Inferred %s to %s (mismatch player=%s bucket=%s)"
                         " [guild=%s]",
+                        guild.name,
                         username,
                         raid_name,
                         server or "offline",
                         target_server,
-                        guild.name,
                     )
             else:
                 log.debug(
-                    "Inferred %s to %s (no server info) [guild=%s]",
+                    "Guild %s: Inferred %s to %s (no server info)",
+                    guild.name,
                     username,
                     raid_name,
-                    guild.name,
                 )
             bucket.append((uuid, username))
 
     if inferred_q:
         log.warning(
-            "Guild raid inferred players without a resolvable raid name "
-            "(guild=%s uuid=%s): %s slot(s) uninserted.",
+            "Guild %s: Inferred players could not be resolved:%n%s",
             guild.name,
-            guild.uuid,
-            len(inferred_q),
+            inferred_q,
         )
 
     # Log per-raid attribution summary.
@@ -480,8 +470,7 @@ async def _reconcile_guild_raids(
         if leftover:
             names = ", ".join(username for _, username in bucket[-leftover:])
             log.warning(
-                "Guild %s: %d player(s) in incomplete %s group (no hidden-stat "
-                "partner found) — their completions are recorded: %s",
+                "Guild %s: %d player(s) in incomplete %s group:%n%s",
                 guild.name,
                 leftover,
                 raid_name,

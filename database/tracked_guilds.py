@@ -39,13 +39,16 @@ async def refresh(
     pool: Pool,
     guilds: dict[UUID, tuple[str, str]],
     keep_uuids: list[UUID] | None = None,
-) -> None:
+) -> tuple[int, int]:
     """Replace the tracked set with a new one, preserving specified UUIDs."""
     keep = list(guilds.keys())
     if keep_uuids:
         keep.extend(keep_uuids)
 
     async with pool.acquire() as conn, conn.transaction():
+        rows = await conn.fetch("SELECT uuid FROM tracked_guilds")
+        old_uuids = {row[0] for row in rows}
+
         if guilds:
             uuids = list(guilds.keys())
             names = [guilds[uuid][0] for uuid in uuids]
@@ -61,10 +64,7 @@ async def refresh(
                 names,
                 prefixes,
             )
-        await conn.execute(
-            "DELETE FROM tracked_guilds WHERE uuid <> ALL($1)",
-            keep,
-        )
+        await conn.execute("DELETE FROM tracked_guilds WHERE uuid <> ALL($1)", keep)
         if guilds:
             await conn.execute(
                 "INSERT INTO tracked_guilds (uuid)"
@@ -72,6 +72,9 @@ async def refresh(
                 " ON CONFLICT (uuid) DO NOTHING",
                 uuids,
             )
+
+        new_uuids = set(keep)
+        return len(new_uuids - old_uuids), len(old_uuids - new_uuids)
 
 
 async def find(pool: Pool, query: str) -> list[TrackedGuild]:

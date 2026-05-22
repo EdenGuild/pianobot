@@ -42,12 +42,21 @@ async def refresh_tracked_guilds(bot: Pianobot) -> None:
         return
     keep_uuids = [bot.eden_wynn_uuid]
 
+    added, removed = 0, 0
     for attempt in range(3):
         try:
-            await tracked_guilds.refresh(bot.pool, merged, keep_uuids=keep_uuids)
+            added, removed = await tracked_guilds.refresh(bot.pool, merged, keep_uuids)
+            break
         except Exception as exc:
             if attempt == 2:
                 raise
             log.warning("Refreshing tracked guilds raised %s", exc)
             await asyncio.sleep(0.2 * (attempt + 1))
-    log.info("Refreshed tracked guilds: %d entries", len(merged))
+
+    if added > 0 or removed > 0:
+        log.info(
+            "Tracked guilds changed: %d entries (+%d, -%d)",
+            len(merged),
+            added,
+            removed,
+        )
