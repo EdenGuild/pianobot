@@ -15,6 +15,7 @@ class KnownGuild:
     name: str
     prefix: str | None
     founded_at: datetime | None
+    deleted_at: datetime | None = None
 
 
 @dataclass(slots=True, frozen=True)
@@ -40,14 +41,14 @@ async def name_by_uuid(pool: Pool) -> dict[UUID, str]:
 async def all_known(pool: Pool) -> list[KnownGuild]:
     """Every known guild sorted by name (used by autocomplete)."""
     rows = await pool.fetch(
-        "SELECT uuid, name, prefix, founded_at FROM guild_names ORDER BY name"
+        "SELECT uuid, name, prefix, founded_at, deleted_at FROM guild_names ORDER BY name"
     )
     return [KnownGuild(*row) for row in rows]
 
 
 async def all_with_prefix(pool: Pool) -> dict[UUID, tuple[str, str | None]]:
     """Lightweight snapshot: every guild's current name and prefix."""
-    rows = await pool.fetch("SELECT uuid, name, prefix FROM guild_names")
+    rows = await pool.fetch("SELECT uuid, name, prefix FROM guild_names WHERE deleted_at IS NULL")
     return {row[0]: (row[1], row[2]) for row in rows}
 
 
@@ -57,7 +58,8 @@ async def upsert(pool: Pool, uuid: UUID, name: str, prefix: str | None = None) -
         "INSERT INTO guild_names (uuid, name, prefix) VALUES ($1, $2, $3)"
         " ON CONFLICT (uuid) DO UPDATE SET"
         "   name   = EXCLUDED.name,"
-        "   prefix = COALESCE(EXCLUDED.prefix, guild_names.prefix)",
+        "   prefix = COALESCE(EXCLUDED.prefix, guild_names.prefix),"
+        "   deleted_at = NULL",
         uuid,
         name,
         prefix,
@@ -73,7 +75,9 @@ async def bulk_upsert(pool: Pool, guilds: dict[UUID, str]) -> None:
     await pool.execute(
         "INSERT INTO guild_names (uuid, name)"
         " SELECT u, n FROM UNNEST($1::UUID[], $2::TEXT[]) AS t(u, n)"
-        " ON CONFLICT (uuid) DO UPDATE SET name = EXCLUDED.name",
+        " ON CONFLICT (uuid) DO UPDATE SET"
+        "   name = EXCLUDED.name,"
+        "   deleted_at = NULL",
         uuids,
         names,
     )
@@ -90,10 +94,21 @@ async def bulk_upsert_full(pool: Pool, guilds: dict[UUID, tuple[str, str]]) -> N
         " SELECT * FROM UNNEST($1::UUID[], $2::TEXT[], $3::TEXT[])"
         " ON CONFLICT (uuid) DO UPDATE SET"
         "   name = EXCLUDED.name,"
-        "   prefix = EXCLUDED.prefix",
+        "   prefix = EXCLUDED.prefix,"
+        "   deleted_at = NULL",
         uuids,
         list(names),
         list(prefixes),
+    )
+
+
+async def bulk_set_deleted(pool: Pool, uuids: list[UUID]) -> None:
+    """Mark the specified guilds as deleted."""
+    if not uuids:
+        return
+    await pool.execute(
+        "UPDATE guild_names SET deleted_at = NOW() WHERE uuid = ANY($1::UUID[])",
+        uuids,
     )
 
 

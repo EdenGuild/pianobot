@@ -55,7 +55,8 @@ async def refresh(
                 " SELECT * FROM UNNEST($1::UUID[], $2::TEXT[], $3::TEXT[])"
                 " ON CONFLICT (uuid) DO UPDATE SET"
                 "   name   = EXCLUDED.name,"
-                "   prefix = COALESCE(EXCLUDED.prefix, guild_names.prefix)",
+                "   prefix = COALESCE(EXCLUDED.prefix, guild_names.prefix),"
+                "   deleted_at = NULL",
                 uuids,
                 names,
                 prefixes,

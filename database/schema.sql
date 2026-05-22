@@ -28,7 +28,8 @@ CREATE TABLE guild_names
     uuid       UUID PRIMARY KEY,
     name       TEXT NOT NULL,
     prefix     TEXT,
-    founded_at TIMESTAMPTZ
+    founded_at TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ
 );
 CREATE INDEX idx_guild_names_name ON guild_names (name);
 CREATE INDEX idx_guild_names_prefix ON guild_names (prefix);

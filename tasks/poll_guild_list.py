@@ -62,6 +62,9 @@ async def _sync(bot: Pianobot, incoming: dict[UUID, tuple[str, str]]) -> None:
             log.info("Guild retagged: %s [%s to %s]", new_name, old_prefix, new_prefix)
 
     await guilds.insert_events(bot.pool, events)
+    deleted_uuids = list(current_set - incoming_set)
+    if deleted_uuids:
+        await guilds.bulk_set_deleted(bot.pool, deleted_uuids)
     await guilds.bulk_upsert_full(bot.pool, incoming)
 
 
