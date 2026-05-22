@@ -31,6 +31,6 @@ class ConfirmResetAllView(ui.View):
             if isinstance(child, ui.Button):
                 child.disabled = True
         await interaction.response.edit_message(
-            content=f"All pending {self.kind} balances have been reset.", view=self
+            content=f"All pending {self.kind} balances have been reset.", view=None
         )
         self.stop()

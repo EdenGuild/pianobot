@@ -60,11 +60,13 @@ class _TomeGroup(app_commands.Group, name="tome"):
         """Mark the user's oldest pending request as granted."""
         if await tomes.resolve_oldest(self.bot.pool, user.id, "granted"):
             await interaction.response.send_message(
-                f"{user.display_name} has been removed from the tome queue."
+                f"{user.display_name} has been removed from the tome queue.",
+                ephemeral=True,
             )
             await post_queue(
                 self.bot,
-                f"{user.display_name} received a tome.\nCurrently pending tomes:",
+                f"{interaction.user.mention} granted {user.display_name}'s request.\n"
+                "Currently pending tomes:",
             )
         else:
             await interaction.response.send_message(
@@ -76,11 +78,13 @@ class _TomeGroup(app_commands.Group, name="tome"):
         """Mark the user's oldest pending request as denied."""
         if await tomes.resolve_oldest(self.bot.pool, user.id, "denied"):
             await interaction.response.send_message(
-                f"{user.display_name} has been removed from the tome queue."
+                f"{user.display_name} has been removed from the tome queue.",
+                ephemeral=True,
             )
             await post_queue(
                 self.bot,
-                f"{user.display_name}'s request was denied.\nCurrently pending tomes:",
+                f"{interaction.user.mention} denied {user.display_name}'s request.\n"
+                "Currently pending tomes:",
             )
         else:
             await interaction.response.send_message(

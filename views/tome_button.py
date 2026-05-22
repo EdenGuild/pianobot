@@ -84,7 +84,7 @@ async def post_queue(bot: Pianobot, header: str) -> None:
 
     pending = await tomes.pending(bot.pool)
     rows: list[list[str]] = []
-    for discord_id, (pending_count, granted, latest) in pending.items():
+    for discord_id, (pending_count, granted, latest) in reversed(pending.items()):
         try:
             member = await guild.fetch_member(discord_id)
         except DiscordException:
