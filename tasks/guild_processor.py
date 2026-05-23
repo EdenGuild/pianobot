@@ -444,7 +444,7 @@ async def _reconcile_guild_raids(
 
     if inferred_q:
         log.warning(
-            "Guild %s: Inferred players could not be resolved:%n%s",
+            "Guild %s: Inferred players could not be resolved:\n%s",
             guild.name,
             inferred_q,
         )
@@ -470,7 +470,7 @@ async def _reconcile_guild_raids(
         if leftover:
             names = ", ".join(username for _, username in bucket[-leftover:])
             log.warning(
-                "Guild %s: %d player(s) in incomplete %s group:%n%s",
+                "Guild %s: %d player(s) in incomplete %s group:\n%s",
                 guild.name,
                 leftover,
                 raid_name,
