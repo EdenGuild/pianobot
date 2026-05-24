@@ -425,8 +425,7 @@ async def _reconcile_guild_raids(
                     )
                 else:
                     log.debug(
-                        "Guild %s: Inferred %s to %s (mismatch player=%s bucket=%s)"
-                        " [guild=%s]",
+                        "Guild %s: Inferred %s to %s (mismatch player=%s bucket=%s)",
                         guild.name,
                         username,
                         raid_name,
@@ -444,9 +443,9 @@ async def _reconcile_guild_raids(
 
     if inferred_q:
         log.warning(
-            "Guild %s: Inferred players could not be resolved:\n%s",
+            "Guild %s: %d inferred players could not be resolved",
             guild.name,
-            inferred_q,
+            len(inferred_q),
         )
 
     # Log per-raid attribution summary.
@@ -469,8 +468,8 @@ async def _reconcile_guild_raids(
             )
         if leftover:
             names = ", ".join(username for _, username in bucket[-leftover:])
-            log.warning(
-                "Guild %s: %d player(s) in incomplete %s group:\n%s",
+            log.debug(
+                "Guild %s: %d player(s) in incomplete %s group",
                 guild.name,
                 leftover,
                 raid_name,

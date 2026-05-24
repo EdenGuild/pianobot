@@ -6,7 +6,15 @@ import os
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
-from discord import ButtonStyle, DiscordException, Interaction, TextChannel, ui
+from discord import (
+    AllowedMentions,
+    ButtonStyle,
+    DiscordException,
+    Interaction,
+    Message,
+    TextChannel,
+    ui,
+)
 
 from database import tomes
 from utils import format_time_since
@@ -103,9 +111,14 @@ async def post_queue(bot: Pianobot, header: str) -> None:
         await channel.send(f"{header} None!")
         return
 
+    async def send_without_pings(content: str, view: ui.View) -> Message:
+        return await channel.send(
+            content=content, view=view, allowed_mentions=AllowedMentions.none()
+        )
+
     columns = {"Discord Name": 28, "Requested": 11, "Received": 10, "Requested At": 18}
     await send_table(
-        channel.send,
+        send_without_pings,
         columns,
         rows,
         flippable=False,

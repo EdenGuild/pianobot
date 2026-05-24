@@ -41,14 +41,18 @@ async def name_by_uuid(pool: Pool) -> dict[UUID, str]:
 async def all_known(pool: Pool) -> list[KnownGuild]:
     """Every known guild sorted by name (used by autocomplete)."""
     rows = await pool.fetch(
-        "SELECT uuid, name, prefix, founded_at, deleted_at FROM guild_names ORDER BY name"
+        "SELECT uuid, name, prefix, founded_at, deleted_at"
+        " FROM guild_names"
+        " ORDER BY name"
     )
     return [KnownGuild(*row) for row in rows]
 
 
 async def all_with_prefix(pool: Pool) -> dict[UUID, tuple[str, str | None]]:
     """Lightweight snapshot: every guild's current name and prefix."""
-    rows = await pool.fetch("SELECT uuid, name, prefix FROM guild_names WHERE deleted_at IS NULL")
+    rows = await pool.fetch(
+        "SELECT uuid, name, prefix FROM guild_names WHERE deleted_at IS NULL"
+    )
     return {row[0]: (row[1], row[2]) for row in rows}
 
 

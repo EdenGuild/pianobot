@@ -7,6 +7,7 @@ from uuid import UUID
 
 from asyncpg import Pool
 from discord import Interaction, Member, app_commands
+from discord.utils import format_dt
 
 from database import eden, players, tomes
 from views import ConfirmResetAllView, post_queue
@@ -49,7 +50,7 @@ class _TomeGroup(app_commands.Group, name="tome"):
         for discord_id, (p_count, granted, latest) in pending.items():
             member = interaction.guild and interaction.guild.get_member(discord_id)
             name = member.display_name if member else str(discord_id)
-            ts = f"<t:{int(latest.timestamp())}:R>" if latest else "?"
+            ts = format_dt(latest, style="R") if latest else "?"
             lines.append(
                 f"**{name}** — {p_count} pending, {granted} granted total (last: {ts})"
             )
@@ -65,13 +66,11 @@ class _TomeGroup(app_commands.Group, name="tome"):
             )
             await post_queue(
                 self.bot,
-                f"{interaction.user.mention} granted {user.display_name}'s request.\n"
+                f"{interaction.user.mention} granted {user.mention}'s request.\n"
                 "Currently pending tomes:",
             )
         else:
-            await interaction.response.send_message(
-                f"{user.display_name} is not queued up."
-            )
+            await interaction.response.send_message(f"{user.mention} is not queued up.")
 
     @app_commands.command()
     async def deny(self, interaction: Interaction, user: Member) -> None:
@@ -83,13 +82,11 @@ class _TomeGroup(app_commands.Group, name="tome"):
             )
             await post_queue(
                 self.bot,
-                f"{interaction.user.mention} denied {user.display_name}'s request.\n"
+                f"{interaction.user.mention} denied {user.mention}'s request.\n"
                 "Currently pending tomes:",
             )
         else:
-            await interaction.response.send_message(
-                f"{user.display_name} is not queued up."
-            )
+            await interaction.response.send_message(f"{user.mention} is not queued up.")
 
 
 @app_commands.default_permissions(administrator=True)

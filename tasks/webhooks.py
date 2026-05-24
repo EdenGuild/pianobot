@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from discord import Embed, File, Webhook
-from discord.utils import format_dt
+from discord.utils import escape_markdown, format_dt
 
 from api import GuildMember, NotFoundError, TerritorySnapshot, WynncraftError
 from tasks.guild_processor import (
@@ -33,7 +33,7 @@ AVATAR_URL = (
     "83f879567954aee29bc9fd534bc05b1f.webp"
 )
 
-RAID_COLORS: dict[str, int] = {
+RAID_COLORS = {
     "Nest of the Grootslangs": 0x00AA00,
     "Orphion's Nexus of Light": 0xFFAA00,
     "The Canyon Colossus": 0x00AAAA,
@@ -60,9 +60,8 @@ async def _send_member_webhook(bot: Pianobot, embed: Embed) -> None:
 async def send_eden_guild_join(bot: Pianobot, event: JoinEvent) -> None:
     """Post a guild join notification."""
     member: GuildMember = event.member
-    description = (
-        f"{member.username} has joined Eden {format_dt(member.joined_at, 'R')}\n\n"
-    )
+    username = escape_markdown(member.username)
+    description = f"{username} has joined Eden {format_dt(member.joined_at, 'R')}\n\n"
     try:
         player = await bot.api.get_player(member.uuid)
         first_join = format_dt(player.joined) if player.joined else "Unknown"
@@ -85,10 +84,11 @@ async def send_eden_guild_join(bot: Pianobot, event: JoinEvent) -> None:
 
 async def send_eden_guild_leave(bot: Pianobot, event: LeaveEvent) -> None:
     """Post a guild leave notification."""
+    username = escape_markdown(event.username)
     embed = Embed(
-        title=f"Guild Leave: {event.username}",
+        title=f"Guild Leave: {username}",
         description=(
-            f"{event.username} has left Eden!\n\n"
+            f"{username} has left Eden!\n\n"
             f"Joined at: {format_dt(event.prev.joined_at)}\n"
             f"Last rank: {event.prev.rank}\n"
             f"XP contributed: {event.prev.contributed_xp}"
@@ -102,13 +102,15 @@ async def send_eden_guild_leave(bot: Pianobot, event: LeaveEvent) -> None:
 async def send_eden_rename(bot: Pianobot, event: RenameEvent) -> None:
     """Post a username change notification."""
     member = event.member
+    old_name = escape_markdown(event.old_username)
+    new_name = escape_markdown(member.username)
     embed = Embed(
-        title=f"Name Change: {member.username}",
+        title=f"Name Change: {new_name}",
         description=(
-            f"{event.old_username} has changed their name to {member.username}!\n\n"
+            f"{old_name} has changed their name to {new_name}!\n\n"
             f"Guild rank: {member.rank}\n"
-            f"Old name: {event.old_username}\n"
-            f"New name: {member.username}"
+            f"Old name: {old_name}\n"
+            f"New name: {new_name}"
         ),
         color=0x88FFFF,
     )
@@ -125,13 +127,11 @@ async def send_eden_rank_change(bot: Pianobot, event: RankChangeEvent) -> None:
         is_promotion = new_i > old_i
     except ValueError:
         is_promotion = True
+    username = escape_markdown(member.username)
     embed = Embed(
-        title=(
-            f"Guild {'promotion' if is_promotion else 'demotion'}: {member.username}"
-        ),
+        title=f"Guild {'promotion' if is_promotion else 'demotion'}: {username}",
         description=(
-            f"{member.username} has been"
-            f" {'promoted' if is_promotion else 'demoted'}!\n\n"
+            f"{username} has been {'promoted' if is_promotion else 'demoted'}!\n\n"
             f"Old rank: {event.old_rank}\n"
             f"New rank: {member.rank}"
         ),
@@ -152,7 +152,8 @@ async def send_eden_raid_completed(
         color=RAID_COLORS.get(raid_name) or 0x888888,
         title=":crossed_swords:   Guild Raid completed",
         description="\n".join(
-            f":number_{i}:    {name}" for i, name in enumerate(players, start=1)
+            f":number_{i}:    {escape_markdown(name)}"
+            for i, name in enumerate(players, start=1)
         ),
     )
     embed.set_author(name=raid_name)
@@ -196,7 +197,7 @@ def pack_lines_under_limit(lines: list[str], *, limit: int = 2000) -> list[str]:
             current.append(line)
             current_len += added
     if current:
-        chunks.append("\n".join(current))
+        chunks.append(escape_markdown("\n".join(current)))
     return chunks
 
 
@@ -240,7 +241,7 @@ async def send_territory_change(
     embed = Embed(
         color=0x00AA00 if captured else 0xAA0000,
         title=":crossed_swords:   Territory " + ("captured" if captured else "lost"),
-        description=(
+        description=escape_markdown(
             f"{old_guild or 'Unclaimed'} ({old_count})\n"
             f":arrow_forward:  {new_guild or 'Unclaimed'} ({new_count})"
         ),
@@ -251,9 +252,7 @@ async def send_territory_change(
     webhook = Webhook.from_url(url, session=bot.session)
     try:
         await webhook.send(
-            embed=embed,
-            username="Eden Territory Tracking",
-            avatar_url=AVATAR_URL,
+            embed=embed, username="Eden Territory Tracking", avatar_url=AVATAR_URL
         )
     except Exception as exc:
         log.warning("Territory webhook failed: %s", exc)
@@ -284,15 +283,15 @@ async def send_promotion_cycle_awards(
             if amount == 0:
                 break
             if title == "Guild XP":
-                block += f"{i}. {name} (+{display_full(amount)})\n"
+                block += f"{i}. {escape_markdown(name)} (+{display_full(amount)})\n"
             else:
-                block += f"{i}. {name} (+{amount})\n"
+                block += f"{i}. {escape_markdown(name)} (+{amount})\n"
         embed.add_field(name=title, value=block + "```", inline=False)
 
     header = f"Total tickets: {total_tickets}"
     block = f"```md\n{header}\n{'-' * len(header)}\n"
-    for i, (name, tickets, amount) in enumerate(raffle_winners, start=1):
-        block += f"{i}. {name} ({tickets} tickets for {amount} raids)\n"
+    for i, (name, tickets, raids) in enumerate(raffle_winners, start=1):
+        block += f"{i}. {escape_markdown(name)} ({tickets} tickets for {raids} raids)\n"
     embed.add_field(name="Raid Raffle", value=block + "```", inline=False)
 
     webhook = Webhook.from_url(url, session=bot.session)
