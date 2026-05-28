@@ -6,7 +6,15 @@ import os
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
-from discord import AllowedMentions, ButtonStyle, Interaction, Message, TextChannel, ui
+from discord import (
+    AllowedMentions,
+    ButtonStyle,
+    DiscordException,
+    Interaction,
+    Message,
+    TextChannel,
+    ui,
+)
 
 from database import tomes
 from utils import format_time_since
@@ -85,16 +93,19 @@ async def post_queue(bot: Pianobot, header: str) -> None:
     pending = await tomes.pending(bot.pool)
     rows: list[list[str]] = []
     for discord_id, (pending_count, granted, latest) in reversed(pending.items()):
-        if member := guild.get_member(discord_id):
-            display = member.display_name.lstrip("♔♕♜♝♞♙◉ ")[:24]
-            rows.append(
-                [
-                    display,
-                    str(pending_count),
-                    str(granted),
-                    f"{format_time_since(latest)[1]} ago",
-                ]
-            )
+        try:
+            member = await guild.fetch_member(discord_id)
+        except DiscordException:
+            continue
+        display = member.display_name.lstrip("♔♕♜♝♞♙◉ ")[:24]
+        rows.append(
+            [
+                display,
+                str(pending_count),
+                str(granted),
+                f"{format_time_since(latest)[1]} ago",
+            ]
+        )
 
     if not rows:
         await channel.send(f"{header} None!")

@@ -56,4 +56,4 @@ def start_scheduler(bot: Pianobot) -> None:
         bot.loop.create_task(
             _run_periodically(bot, name, interval, fn), name=f"pianobot-{name}"
         )
-    log.info("Started %d periodic tasks", len(jobs))
+    log.debug("Started %d periodic tasks", len(jobs))
