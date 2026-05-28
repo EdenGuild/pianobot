@@ -37,6 +37,7 @@ class Pianobot(Client):
         self.eden_poll_state = GuildPollState()
         self.tracked_poll_state = GuildPollState()
         self.raid_id_cache: dict[str, int] = {}
+        self.eden_raid_xp_counter: dict[int, int] = {}
         self.eden_wynn_uuid = UUID(os.environ["EDEN_WYNN_UUID"])
         self._scheduler_started = False
 

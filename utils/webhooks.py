@@ -142,11 +142,21 @@ async def send_eden_rank_change(bot: Pianobot, event: RankChangeEvent) -> None:
 
 
 async def send_eden_raid_completed(
-    bot: Pianobot, raid_name: str, players: list[str], guild_level: int
+    bot: Pianobot, raid_name: str, players: list[str], guild_level: int, xp_percent: int
 ) -> None:
     """Post one 4-player guild raid completion embed with assets."""
     if (url := os.getenv("RAID_CHANNEL_WEBHOOK")) is None:
         return
+
+    if xp_percent not in bot.eden_raid_xp_counter:
+        subtract_raids = 0
+        bot.eden_raid_xp_counter.clear()
+        bot.eden_raid_xp_counter[xp_percent] = 1
+    else:
+        subtract_raids = bot.eden_raid_xp_counter[xp_percent]
+        bot.eden_raid_xp_counter[xp_percent] += 1
+    raids_left = 1000 * (100 - xp_percent) - subtract_raids
+
     xp_reward = guild_raid_total_xp_reward(guild_level)
     embed = Embed(
         color=RAID_COLORS.get(raid_name) or 0x888888,
@@ -158,7 +168,8 @@ async def send_eden_raid_completed(
     )
     embed.set_author(name=raid_name)
     embed.set_footer(
-        text=f"+2 Aspects, +2048 Emeralds, +{display_short(xp_reward)} XP",
+        text=f"+2 Aspects, +2048 Emeralds, +{display_short(xp_reward)} XP\n"
+        f"{raids_left} Guild Raids until guild level {guild_level + 1}",
         icon_url="attachment://aspect.png",
     )
     embed.set_thumbnail(url="attachment://raid.png")

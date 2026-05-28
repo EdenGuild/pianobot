@@ -15,9 +15,8 @@ from database import (
     tracked_guilds,
 )
 from database.tracked_guilds import TrackedGuild
-from tasks import webhooks
 from tasks.guild_processor import process_guild
-from utils import display_full, display_short
+from utils import display_full, display_short, webhooks
 
 if TYPE_CHECKING:
     from client import Pianobot

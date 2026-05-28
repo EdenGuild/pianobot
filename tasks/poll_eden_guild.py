@@ -10,8 +10,8 @@ from uuid import UUID
 
 from api import NotFoundError, WynncraftError
 from database import eden, guild_membership, guild_metrics
-from tasks import webhooks
 from tasks.guild_processor import NewRaid, process_guild
+from utils import webhooks
 
 if TYPE_CHECKING:
     from client import Pianobot
@@ -69,6 +69,8 @@ async def _dispatch_raid_groups(
     bot: Pianobot, new_raids: list[NewRaid], guild_level: int
 ) -> None:
     """Post one webhook embed per full party of four, per raid name."""
+    eden_xp_percent = await guild_metrics.last_xp_percent(bot.pool, bot.eden_wynn_uuid)
+
     by_raid: dict[str, list[NewRaid]] = defaultdict(list)
     for raid in new_raids:
         by_raid[raid.raid_name].append(raid)
@@ -93,11 +95,12 @@ async def _dispatch_raid_groups(
             if len(group) == 4:
                 usernames = [r.username for r in group]
                 await webhooks.send_eden_raid_completed(
-                    bot, raid_name, usernames, guild_level
+                    bot, raid_name, usernames, guild_level, eden_xp_percent or 0
                 )
             else:
                 log.warning(
-                    "%d raid log row(s) for %s not in a party of 4 for webhook",
+                    "%d players for %s not in a party of 4 - all new raids: %s",
                     len(group),
                     raid_name,
+                    new_raids,
                 )

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from api import WynncraftError
 from database import guilds, world_state
-from tasks import webhooks
+from utils import webhooks
 
 if TYPE_CHECKING:
     from client import Pianobot

@@ -78,6 +78,17 @@ async def online_history(
     return {row[0]: row[1] for row in rows}
 
 
+async def last_xp_percent(pool: Pool, guild_uuid: UUID) -> int | None:
+    """Last xp percentage recorded for the given guild, 0-100."""
+    xp_percent: int | None = await pool.fetchval(
+        "SELECT xp_percent FROM guild_metric_snapshots"
+        " WHERE guild_uuid = $1"
+        " ORDER BY taken_at DESC LIMIT 1",
+        guild_uuid,
+    )
+    return xp_percent
+
+
 async def cleanup(pool: Pool) -> None:
     """Hourly-mean after 7 days, daily-mean after 30 days."""
     await pool.execute(

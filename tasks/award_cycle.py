@@ -8,8 +8,7 @@ from random import choices
 from typing import TYPE_CHECKING
 
 from database import completions, eden
-from tasks import webhooks
-from utils import get_cycle, get_cycle_window, get_prev_cycle
+from utils import get_cycle, get_cycle_window, get_prev_cycle, webhooks
 
 if TYPE_CHECKING:
     from client import Pianobot
