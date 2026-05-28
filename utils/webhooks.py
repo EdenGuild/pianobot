@@ -155,7 +155,7 @@ async def send_eden_raid_completed(
     else:
         subtract_raids = bot.eden_raid_xp_counter[xp_percent]
         bot.eden_raid_xp_counter[xp_percent] += 1
-    raids_left = 1000 * (100 - xp_percent) - subtract_raids
+    raids_left = 10 * (100 - xp_percent) - subtract_raids
 
     xp_reward = guild_raid_total_xp_reward(guild_level)
     embed = Embed(
