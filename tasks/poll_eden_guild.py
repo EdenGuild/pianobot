@@ -99,8 +99,9 @@ async def _dispatch_raid_groups(
                 )
             else:
                 log.warning(
-                    "%d players for %s not in a party of 4 - all new raids: %s",
+                    "%d players for %s not in party of 4 - new/owed raids: %s, %s",
                     len(group),
                     raid_name,
                     new_raids,
+                    bot.eden_poll_state.owed_raid_slots,
                 )
