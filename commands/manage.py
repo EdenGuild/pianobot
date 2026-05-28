@@ -49,7 +49,9 @@ class _TomeGroup(app_commands.Group, name="tome"):
         lines: list[str] = []
         for discord_id, (p_count, granted, latest) in pending.items():
             member = interaction.guild and interaction.guild.get_member(discord_id)
-            name = member.display_name if member else str(discord_id)
+            if member is None:
+                continue
+            name = member.display_name
             ts = format_dt(latest, style="R") if latest else "?"
             lines.append(
                 f"**{name}** — {p_count} pending, {granted} granted total (last: {ts})"
