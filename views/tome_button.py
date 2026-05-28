@@ -111,10 +111,11 @@ async def post_queue(bot: Pianobot, header: str) -> None:
         await channel.send(f"{header} None!")
         return
 
-    async def send_without_pings(content: str, view: ui.View) -> Message:
-        return await channel.send(
-            content=content, view=view, allowed_mentions=AllowedMentions.none()
-        )
+    async def send_without_pings(content: str, view: ui.View | None = None) -> Message:
+        allowed_mentions = AllowedMentions.none()
+        if view is None:
+            return await channel.send(content, allowed_mentions=allowed_mentions)
+        return await channel.send(content, view=view, allowed_mentions=allowed_mentions)
 
     columns = {"Discord Name": 28, "Requested": 11, "Received": 10, "Requested At": 18}
     await send_table(
